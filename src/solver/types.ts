@@ -1,4 +1,5 @@
-export type Matrix = number[][];
+export type BaseMatrix<T> = T[][];
+export type Matrix = BaseMatrix<number>;
 
 export interface SolveInput {
   chunkSize: number,
@@ -19,5 +20,6 @@ export interface SolveStep {
 export interface SolveResult {
   input: SolveInput,
   steps: SolveStep[],
-  result: number[][]
+  result: number[][],
+  error?: string
 }

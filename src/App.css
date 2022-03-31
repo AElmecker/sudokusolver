@@ -15,6 +15,15 @@ button:hover {
   background-color: lightgrey;
 }
 
+button:disabled {
+  border-color: lightgrey;
+  color: lightgrey;
+}
+
+button:disabled:hover {
+  background-color: initial;
+}
+
 .button-container {
   width: 450px;
   display: flex;
@@ -38,8 +47,28 @@ select:hover {
   background-color: lightgrey;
 }
 
+select:disabled {
+  color: black;
+}
+
 select:focus-visible {
   outline: none;
+}
+
+.step {
+  background-color: rgb(153, 228, 255);
+}
+
+.step:hover {
+  background-color: rgb(98, 192, 226);
+}
+
+.current-step {
+  background-color: rgb(65, 204, 255);
+}
+
+.current-step:hover {
+  background-color: rgb(0, 146, 199);
 }
 
 .main {

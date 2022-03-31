@@ -1,7 +1,6 @@
-import { Matrix, Position, SolveInput, SolveResult, SolveStep } from "./types";
+import { BaseMatrix, Matrix, Position, SolveInput, SolveResult, SolveStep } from "./types";
 
-export const EMPTY_VALUE = 0
-const MAX_ITERATIONS = 250;
+export const EMPTY_VALUE = 0;
 
 export function solve(input: SolveInput): SolveResult {
   validateInput(input);
@@ -9,13 +8,24 @@ export function solve(input: SolveInput): SolveResult {
   const resultMatrix = copyMatrix(input.matrix)
   const steps: SolveStep[] = []
 
+  const maxIterations = Math.pow(input.chunkSize, 2);
+
   let unsolvedPosition = getFirstUnsolvedPosition(null, resultMatrix);
   let iterations = 0;
   let currentStep = 0;
-  while (unsolvedPosition !== null && iterations < MAX_ITERATIONS) {
+
+  let allIterations = 0;
+  let skipped = 0;
+  let errors = 0;
+  const unknownCount = getUnknownPositionsCount(input.matrix);
+
+  while (unsolvedPosition !== null && iterations < maxIterations) {
+    allIterations++;
+    iterations++;
     const possibleValues = getPossibleValues(allowedValues, input.chunkSize, resultMatrix, unsolvedPosition);
 
     if (possibleValues.length === 0) {
+      errors++;
       console.log(`something went wrong, there should be at least one possible value for x=${unsolvedPosition.x}, y=${unsolvedPosition.y}`);
     } else if (possibleValues.length === 1) {
       console.log(`Found match: x=${unsolvedPosition.x}, y=${unsolvedPosition.y}, val=${possibleValues[0]}`)
@@ -26,7 +36,10 @@ export function solve(input: SolveInput): SolveResult {
         value: possibleValues[0]
       });
       currentStep++;
+      unsolvedPosition = null;
+      iterations = 0;
     } else {
+      skipped++;
       console.log(`skipping x=${unsolvedPosition.x}, y=${unsolvedPosition.y}, too many possibilities currently: ${possibleValues}`);
     }
 
@@ -36,13 +49,20 @@ export function solve(input: SolveInput): SolveResult {
       // check whole matrix again if there are still unsolved positions
       unsolvedPosition = getFirstUnsolvedPosition(null, resultMatrix);
     }
-    iterations++;
   }
+
+  console.log("unknown", unknownCount);
+  console.log("iterations", allIterations);
+  console.log("skipped", skipped);
+  console.log("errors", errors);
+
+  const unknownPositionsAfterSolve = getUnknownPositionsCount(resultMatrix);
 
   return {
     input: input,
     steps: steps,
-    result: resultMatrix
+    result: resultMatrix,
+    error: unknownCount > 0 ? `Not all positions could be solved! (${unknownPositionsAfterSolve} not solved)` : undefined
   }
 }
 
@@ -143,8 +163,8 @@ function getAllowedValues(chunkSize: number): number[] {
   return allowedValues;
 }
 
-export function copyMatrix(source: Matrix): Matrix {
-  const destination: Matrix = []
+export function copyMatrix<T>(source: BaseMatrix<T>): BaseMatrix<T> {
+  const destination: BaseMatrix<T> = []
 
   for (let x = 0; x < source.length; x++) {
     destination[x] = []
@@ -184,4 +204,18 @@ function validateInput(input: SolveInput) {
       }
     }
   }
+}
+
+function getUnknownPositionsCount(matrix: Matrix): number {
+  let positions = 0;
+
+  for (let x = 0; x < matrix.length; x++) {
+    for (let y = 0; y < matrix[x].length; y++) {
+      if (matrix[x][y] === EMPTY_VALUE) {
+        positions++;
+      }
+    }
+  }
+
+  return positions;
 }
