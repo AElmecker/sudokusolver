@@ -1,0 +1,15 @@
+{
+  "short_name": "Sudoku Solver",
+  "name": "Small React/typescript app which solves sudokus.",
+  "icons": [
+    {
+      "src": "logo96.png",
+      "type": "image/png",
+      "sizes": "96x96"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
