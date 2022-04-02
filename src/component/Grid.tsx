@@ -6,6 +6,7 @@ import './Grid.css';
 import { DisplayMatrix, StateAction } from '../types';
 import { getChunkStart, getPossibleValues } from '../solver/solver';
 import { Matrix } from '../solver/types';
+import ErrorBoundary from './ErrorBoundary';
 
 export interface GridProps {
   displayMatrix: DisplayMatrix,
@@ -59,8 +60,10 @@ function Grid({displayMatrix, setDisplayMatrix, solved, gridItemLength, chunkSiz
 
   return(
     <div className="grid-container" style={style}>
-      <ChunkDivider size={chunkSize} length={gridItemLength} containerWidth={width} />
-      {gridElements}
+      <ErrorBoundary>
+        <ChunkDivider size={chunkSize} length={gridItemLength} containerWidth={width} />
+        {gridElements}
+      </ErrorBoundary>
     </div>
   );
 }
