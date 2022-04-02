@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
+import { EXAMPLE_EVIL_1 } from './exampleData';
 import './solver/solver';
 import { copyMatrix, EMPTY_VALUE, solve } from './solver/solver';
 import { BaseMatrix, Matrix, SolveStep } from './solver/types';
@@ -27,7 +28,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const reset = useMemo(() => (chunkSize: number, displayMatrix: DisplayMatrix) => {
-    setDisplayMatrix(createEmptyMatrix(chunkSize));
+    setDisplayMatrix(EXAMPLE_EVIL_1);
     setInputMatrix(displayMatrix);
     setSolveSteps([]);
     setCurrentStep(-1);

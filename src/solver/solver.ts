@@ -8,7 +8,8 @@ export function solve(input: SolveInput): SolveResult {
   const resultMatrix = copyMatrix(input.matrix)
   const steps: SolveStep[] = []
 
-  const maxIterations = Math.pow(input.chunkSize, 2);
+  const startTime = Date.now();
+  const maxIterations = Math.pow(input.chunkSize, 4);
 
   let unsolvedPosition = getFirstUnsolvedPosition(null, resultMatrix);
   let iterations = 0;
@@ -26,9 +27,8 @@ export function solve(input: SolveInput): SolveResult {
 
     if (possibleValues.length === 0) {
       errors++;
-      console.log(`something went wrong, there should be at least one possible value for x=${unsolvedPosition.x}, y=${unsolvedPosition.y}`);
+      console.log(`${unsolvedPosition.x}/${unsolvedPosition.y} = ${possibleValues}`);
     } else if (possibleValues.length === 1) {
-      console.log(`Found match: x=${unsolvedPosition.x}, y=${unsolvedPosition.y}, val=${possibleValues[0]}`)
       resultMatrix[unsolvedPosition.x][unsolvedPosition.y] = possibleValues[0];
       steps.push({
         position: unsolvedPosition,
@@ -36,11 +36,23 @@ export function solve(input: SolveInput): SolveResult {
         value: possibleValues[0]
       });
       currentStep++;
-      unsolvedPosition = null;
       iterations = 0;
+      console.log(`${unsolvedPosition.x}/${unsolvedPosition.y} = ${possibleValues} check`);
     } else {
-      skipped++;
-      console.log(`skipping x=${unsolvedPosition.x}, y=${unsolvedPosition.y}, too many possibilities currently: ${possibleValues}`);
+      const restOfEliminated = eliminate(input.chunkSize, resultMatrix, unsolvedPosition, possibleValues);
+      if (restOfEliminated.length === 1) {
+        resultMatrix[unsolvedPosition.x][unsolvedPosition.y] = restOfEliminated[0];
+        steps.push({
+          position: unsolvedPosition,
+          step: currentStep,
+          value: restOfEliminated[0]
+        });
+        currentStep++;
+        iterations = 0;
+      } else {
+        skipped++;
+      }
+      console.log(`${unsolvedPosition.x}/${unsolvedPosition.y} = ${restOfEliminated} elim (${possibleValues})`);
     }
 
     // these statements need to be at last in while
@@ -55,6 +67,7 @@ export function solve(input: SolveInput): SolveResult {
   console.log("iterations", allIterations);
   console.log("skipped", skipped);
   console.log("errors", errors);
+  console.log(`elapsed time: ${Date.now() - startTime}ms`);
 
   const unknownPositionsAfterSolve = getUnknownPositionsCount(resultMatrix);
 
@@ -62,7 +75,7 @@ export function solve(input: SolveInput): SolveResult {
     input: input,
     steps: steps,
     result: resultMatrix,
-    error: unknownCount > 0 ? `Not all positions could be solved! (${unknownPositionsAfterSolve} not solved)` : undefined
+    error: unknownPositionsAfterSolve > 0 ? `Not all positions could be solved! (${unknownPositionsAfterSolve} not solved)` : undefined
   }
 }
 
@@ -88,6 +101,7 @@ function getFirstUnsolvedPosition(last: Position | null, matrix: Matrix): Positi
         return { x: x, y: y };
       }
     }
+    startY = 0;
   }
 
   return null;
@@ -218,4 +232,57 @@ function getUnknownPositionsCount(matrix: Matrix): number {
   }
 
   return positions;
+}
+
+function eliminate(chunkSize: number, matrix: Matrix, position: Position, possibleValues: number[]): number[] {
+  const rest: number[] = [];
+  const chunkStart = getChunkStart(chunkSize, position);
+
+  const valuesOfRow: number[][] = [];
+  let index = 0;
+  for(let x = chunkStart.x; x < chunkStart.x + chunkSize; x++) {
+    if (x !== position.x) {
+      valuesOfRow[index] = [];
+      for (let y = 0; y < Math.pow(chunkSize, 2); y++) {
+        if (matrix[x][y] !== EMPTY_VALUE) {
+          valuesOfRow[index].push(matrix[x][y]);
+        }
+      }
+      index++;
+    }
+  }
+
+  for(let y = chunkStart.y; y < chunkStart.y + chunkSize; y++) {
+    if (y !== position.y) {
+      valuesOfRow[index] = []
+      for (let x = 0; x < Math.pow(chunkSize, 2); x++) {
+        if (matrix[x][y] !== EMPTY_VALUE) {
+          valuesOfRow[index].push(matrix[x][y]);
+        }
+      }
+      index++;
+    }
+  }
+
+  possibleValues.forEach(value => containedInAll(value, valuesOfRow) && rest.push(value));
+
+  return rest;
+}
+
+function containedInAll(possibleValue: number, valuesOfRow: number[][]): boolean {
+  if (valuesOfRow.length === 0) {
+    return false;
+  }
+
+  for(let i = 0; i < valuesOfRow.length; i++) {
+    if (!valuesOfRow[i].includes(possibleValue)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function getChunkStart(chunkSize: number, position: Position): Position {
+  return { x: Math.floor(position.x / chunkSize), y: Math.floor(position.y / chunkSize) };
 }
