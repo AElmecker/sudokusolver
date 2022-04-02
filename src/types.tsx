@@ -7,5 +7,6 @@ export interface DisplayValue {
   value: number,
   input: boolean,
   solveStep: boolean,
-  currentStep: boolean
+  currentStep: boolean,
+  invalid: boolean
 }

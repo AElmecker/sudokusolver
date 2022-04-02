@@ -37,3 +37,7 @@ select {
   .current-step:hover {
     background-color: rgb(0, 146, 199);
   }
+
+  .invalid-input {
+    background-color: rgb(248, 81, 81);
+  }

@@ -4,21 +4,22 @@ import Grid from './component/Grid';
 import './solver/solver';
 import { copyMatrix, EMPTY_VALUE, solve } from './solver/solver';
 import { Matrix, SolveStep } from './solver/types';
-import { DisplayMatrix } from './types';
+import { DisplayMatrix, DisplayValue } from './types';
 
 const SQUARE_LENGTH = 75;
-export const EMPTY_DISPLAY_VALUE = {value: EMPTY_VALUE, input: false,  solveStep: false, currentStep: false};
+export const EMPTY_DISPLAY_VALUE: DisplayValue = {value: EMPTY_VALUE, input: false,  solveStep: false, currentStep: false, invalid: false};
 
 function App() {
   const [chunkSize, setChunkSize] = useState(3);
-  const [inputMatrix, setInputMatrix] = useState<DisplayMatrix>([]);
-  const [displayMatrix, setDisplayMatrix] = useState<DisplayMatrix>([]);
+  const [inputMatrix, setInputMatrix] = useState<DisplayMatrix>(createEmptyMatrix(chunkSize));
+  const [displayMatrix, setDisplayMatrix] = useState<DisplayMatrix>(createEmptyMatrix(chunkSize));
   const [solveSteps, setSolveSteps] = useState<SolveStep[]>([]);
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [solved, setSolved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const reset = useMemo(() => (chunkSize: number) => {
+    setChunkSize(chunkSize);
     setDisplayMatrix(createEmptyMatrix(chunkSize));
     setInputMatrix(createEmptyMatrix(chunkSize));
     setSolveSteps([]);
@@ -26,10 +27,6 @@ function App() {
     setSolved(false);
     setError(null);
   }, [])
-
-  useEffect(() => {
-    reset(chunkSize);
-  }, [reset, chunkSize]);
 
   useEffect(() => {
     if (solved) {
@@ -43,8 +40,8 @@ function App() {
       <div className="header">
         <h1 style={{textAlign: "center"}}>Sudoku Solver</h1>
         <div className="button-container">
-          <button onClick={() => setChunkSize(2)}>2 x 2</button>
-          <button onClick={() => setChunkSize(3)}>3 x 3</button>
+          <button disabled={chunkSize===2} onClick={() => chunkSize !== 2 && reset(2)}>2 x 2</button>
+          <button disabled={chunkSize===3} onClick={() => chunkSize !== 3 && reset(3)}>3 x 3</button>
           <button onClick={() => reset(chunkSize)}>Reset</button>
           {
             solved ? 
@@ -56,6 +53,15 @@ function App() {
               setError(null);
             }}>Unlock</button> :
             <button onClick={() => {
+              if (containsNoInput(displayMatrix)) {
+                setError("Please provide an input!");
+                return;
+              }
+              if (containsInvalidInput(displayMatrix)) {
+                setError("Input is invalid!");
+                return;
+              }
+
               const result = solve({chunkSize: chunkSize, matrix: displayToNumberMatrix(displayMatrix)});
               if (result.steps.length > 0) {
                 setInputMatrix(displayMatrix);
@@ -112,14 +118,15 @@ function appendSteps(baseMatrix: DisplayMatrix, solveSteps: SolveStep[], current
       value: step.value,
       input: false,
       solveStep: true,
-      currentStep: i === currentStep
+      currentStep: i === currentStep,
+      invalid: false
     }
   }
 
   return displayMatrix;
 }
 
-function displayToNumberMatrix(source: DisplayMatrix): Matrix {
+export function displayToNumberMatrix(source: DisplayMatrix): Matrix {
   const destination: Matrix = []
 
   for (let x = 0; x < source.length; x++) {
@@ -130,6 +137,30 @@ function displayToNumberMatrix(source: DisplayMatrix): Matrix {
   }
 
   return destination;
+}
+
+function containsInvalidInput(source: DisplayMatrix): boolean {
+  for (let x = 0; x < source.length; x++) {
+    for (let y = 0; y < source[x].length; y++) {
+      if (source[x][y].invalid) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function containsNoInput(source: DisplayMatrix): boolean {
+  for (let x = 0; x < source.length; x++) {
+    for (let y = 0; y < source[x].length; y++) {
+      if (source[x][y].value !== EMPTY_VALUE) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 export default App;

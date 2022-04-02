@@ -1,5 +1,7 @@
 import { Matrix, SolveInput } from "./types";
 import * as solver from './solver'
+import { displayToNumberMatrix } from "../App";
+import { EXAMPLE_EASY_1, EXAMPLE_EASY_1_SOLUTION } from "../exampleData";
 
 test.each([
   [[]],
@@ -71,7 +73,7 @@ test('simple 2x2 sudoku can be solved', () => {
   expect(output.steps.length).toEqual(12);
 });
 
-test.skip('simple 3x3 sudoku can be solved', () => {
+test('simple 3x3 sudoku can be solved', () => {
   const input: SolveInput = {
     chunkSize: 3,
     matrix: [
@@ -99,6 +101,14 @@ test.skip('simple 3x3 sudoku can be solved', () => {
     [1, 5, 7, 9, 8, 2, 4, 3, 6]
   ]);
   expect(output.steps.length).toEqual(49);
+});
+
+test('easy 3x3 sudoku can be solved', () => {
+  const input: SolveInput = {
+    chunkSize: 3,
+    matrix: displayToNumberMatrix(EXAMPLE_EASY_1)
+  };
+  expect(solver.solve(input).result).toEqual(displayToNumberMatrix(EXAMPLE_EASY_1_SOLUTION));
 });
 
 function createMatrix(): Matrix {

@@ -107,7 +107,7 @@ function getFirstUnsolvedPosition(last: Position | null, matrix: Matrix): Positi
   return null;
 }
 
-function getPossibleValues(allowedValues: number[], chunkSize: number, matrix: Matrix, position: Position): number[] {
+export function getPossibleValues(allowedValues: number[], chunkSize: number, matrix: Matrix, position: Position): number[] {
   const usedValues = [];
   usedValues.push(...getUsedValuesFromChunk(chunkSize, matrix, position));
   usedValues.push(...getUsedValuesFromAxisX(matrix, position));
@@ -240,7 +240,7 @@ function eliminate(chunkSize: number, matrix: Matrix, position: Position, possib
 
   const valuesOfRow: number[][] = [];
   let index = 0;
-  for(let x = chunkStart.x; x < chunkStart.x + chunkSize; x++) {
+  for(let x = (chunkStart.x * chunkSize); x < (chunkStart.x * chunkSize) + chunkSize; x++) {
     if (x !== position.x) {
       valuesOfRow[index] = [];
       for (let y = 0; y < Math.pow(chunkSize, 2); y++) {
@@ -252,7 +252,7 @@ function eliminate(chunkSize: number, matrix: Matrix, position: Position, possib
     }
   }
 
-  for(let y = chunkStart.y; y < chunkStart.y + chunkSize; y++) {
+  for(let y = (chunkStart.y * chunkSize); y < (chunkStart.y * chunkSize) + chunkSize; y++) {
     if (y !== position.y) {
       valuesOfRow[index] = []
       for (let x = 0; x < Math.pow(chunkSize, 2); x++) {
@@ -283,6 +283,6 @@ function containedInAll(possibleValue: number, valuesOfRow: number[][]): boolean
   return true;
 }
 
-function getChunkStart(chunkSize: number, position: Position): Position {
+export function getChunkStart(chunkSize: number, position: Position): Position {
   return { x: Math.floor(position.x / chunkSize), y: Math.floor(position.y / chunkSize) };
 }

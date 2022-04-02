@@ -36,7 +36,9 @@ function getClassForDisplayValue(value: DisplayValue): string {
     return "current-step";
   } else if (value.solveStep) {
     return "step";
-  } else {
+  } else if (value.invalid) {
+    return "invalid-input";
+   }else {
     return "";
   }
 }
