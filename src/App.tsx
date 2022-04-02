@@ -1,22 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import { EXAMPLE_EVIL_1 } from './exampleData';
+import Grid from './component/Grid';
 import './solver/solver';
 import { copyMatrix, EMPTY_VALUE, solve } from './solver/solver';
-import { BaseMatrix, Matrix, SolveStep } from './solver/types';
-
-type StateAction<T> = React.Dispatch<React.SetStateAction<T>>;
-export type DisplayMatrix = BaseMatrix<DisplayValue>;
-
-interface DisplayValue {
-  value: number,
-  input: boolean,
-  solveStep: boolean,
-  currentStep: boolean
-}
+import { Matrix, SolveStep } from './solver/types';
+import { DisplayMatrix } from './types';
 
 const SQUARE_LENGTH = 75;
-const EMPTY_DISPLAY_VALUE = {value: EMPTY_VALUE, input: false,  solveStep: false, currentStep: false};
+export const EMPTY_DISPLAY_VALUE = {value: EMPTY_VALUE, input: false,  solveStep: false, currentStep: false};
 
 function App() {
   const [chunkSize, setChunkSize] = useState(3);
@@ -27,9 +18,9 @@ function App() {
   const [solved, setSolved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const reset = useMemo(() => (chunkSize: number, displayMatrix: DisplayMatrix) => {
-    setDisplayMatrix(EXAMPLE_EVIL_1);
-    setInputMatrix(displayMatrix);
+  const reset = useMemo(() => (chunkSize: number) => {
+    setDisplayMatrix(createEmptyMatrix(chunkSize));
+    setInputMatrix(createEmptyMatrix(chunkSize));
     setSolveSteps([]);
     setCurrentStep(-1);
     setSolved(false);
@@ -37,8 +28,8 @@ function App() {
   }, [])
 
   useEffect(() => {
-    reset(chunkSize, displayMatrix);
-  }, [chunkSize]);
+    reset(chunkSize);
+  }, [reset, chunkSize]);
 
   useEffect(() => {
     if (solved) {
@@ -54,7 +45,7 @@ function App() {
         <div className="button-container">
           <button onClick={() => setChunkSize(2)}>2 x 2</button>
           <button onClick={() => setChunkSize(3)}>3 x 3</button>
-          <button onClick={() => reset(chunkSize, displayMatrix)}>Reset</button>
+          <button onClick={() => reset(chunkSize)}>Reset</button>
           {
             solved ? 
             <button onClick={() => {
@@ -90,106 +81,12 @@ function App() {
             onClick={() => setCurrentStep(solveSteps.length - 1)}>Show All</button>
         </div>
       </div>
-      <div className="container" style={{width: width}}>
-        {gridLines(chunkSize, width)}
-        {mapToGrid(copyMatrix(displayMatrix), setDisplayMatrix, solved)}
-      </div>
+      <Grid displayMatrix={copyMatrix(displayMatrix)} setDisplayMatrix={setDisplayMatrix} solved={solved} gridItemLength={SQUARE_LENGTH} chunkSize={chunkSize} width={width} />
       {error !== null && <div className="container" style={{width: width}}>
         {error}
       </div>}
     </div>
   );
-}
-
-function gridLines(chunkSize: number, containerWidth: number): JSX.Element[] {
-  const width = SQUARE_LENGTH * chunkSize - chunkSize;
-  const elements: JSX.Element[] = [];
-
-  elements.push(<div key={"main"} className="grid"
-    style={{
-      top: -1,
-      left: -1,
-      width: containerWidth - 3,
-      height: containerWidth - 3}}
-    />);
-
-  for (let x = 0; x < chunkSize; x++) {
-    for (let y = 0; y < chunkSize; y++) {
-      elements.push(<div key={`${x} ${y}`} className="grid"
-      style={{
-        top: -1 + width * y,
-        left: -1 + width * x,
-        width: width - 3,
-        height: width - 3
-      }} />);
-    }
-  }
-
-  return elements;
-}
-
-function mapToGrid(displayMatrix: DisplayMatrix, setDisplayMatrix: StateAction<DisplayMatrix>, solved: boolean): JSX.Element[] {
-  const length = displayMatrix.length;
-  const elements: JSX.Element[] = [];
-  for (let y = 0; y < length; y++) {
-    elements.push(<div key={y} className="row" style={{width: SQUARE_LENGTH * displayMatrix.length - displayMatrix.length}}>
-        {mapToRow(y, displayMatrix, setDisplayMatrix, solved)}
-      </div>
-    );
-  }
-
-  return elements;
-}
-
-function mapToRow(y: number, displayMatrix: DisplayMatrix, setDisplayMatrix: StateAction<DisplayMatrix>, solved: boolean): JSX.Element[] {
-  const elements: JSX.Element[] = [];
-  const allowedValues: string[] = []
-  allowedValues.push("");
-  for (let x = 1; x <= displayMatrix.length; x++) {
-    allowedValues.push(`${x}`)
-  }
-  for (let x = 0; x < displayMatrix.length; x++) {
-    const value = displayMatrix[x][y].value !== EMPTY_VALUE ? `${displayMatrix[x][y].value}` : "";
-    elements.push(
-      <select key={x}
-        style={{width: SQUARE_LENGTH, height: SQUARE_LENGTH}}
-        value={value}
-        className={getClassForDisplayValue(displayMatrix[x][y])}
-        disabled={solved}
-        onChange={(ev: any) => onItemClick(ev.target.value, x, y, displayMatrix, setDisplayMatrix)}>
-      {allowedValues.map(option => <option key={option} value={option}>{option}</option>)}
-      </select>
-    );
-  }
-  return elements;
-}
-
-function onItemClick(value: any, x: number, y: number, displayMatrix: DisplayMatrix, setDisplayMatrix: StateAction<DisplayMatrix>) {
-  if (value === undefined || value === "") {
-    displayMatrix[x][y] = EMPTY_DISPLAY_VALUE;
-    setDisplayMatrix(displayMatrix);
-  } else {
-    const newValue = parseInt(value);
-    if (newValue >= 1 && newValue <= displayMatrix.length) {
-      displayMatrix[x][y] = {
-        value: newValue,
-        input: true,
-        solveStep: false,
-        currentStep: false
-      };
-      setDisplayMatrix(displayMatrix);
-    }
-  }
-}
-
-function getClassForDisplayValue(value: DisplayValue): string {
-  if (value.currentStep) {
-    return "current-step";
-  } else if (value.solveStep) {
-    return "step";
-  } else {
-    return "";
-  }
 }
 
 function createEmptyMatrix(chunkSize: number): DisplayMatrix {

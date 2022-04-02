@@ -1,0 +1,11 @@
+.grid-container {
+  position: relative;
+  margin: auto;
+  padding:1px 0 0 1px;
+  background: transparent;
+}
+
+.grid-row {
+  display: flex;
+  background: transparent;
+}

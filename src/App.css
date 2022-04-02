@@ -31,46 +31,6 @@ button:disabled:hover {
   justify-content: space-evenly;
 }
 
-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  text-indent: 1px;
-  text-overflow: '';
-  text-align: center;
-  border: 1px solid grey;
-  margin: -1px 0 0 -1px;
-  background: transparent;
-  font-size: x-large;
-}
-
-select:hover {
-  background-color: lightgrey;
-}
-
-select:disabled {
-  color: black;
-}
-
-select:focus-visible {
-  outline: none;
-}
-
-.step {
-  background-color: rgb(153, 228, 255);
-}
-
-.step:hover {
-  background-color: rgb(98, 192, 226);
-}
-
-.current-step {
-  background-color: rgb(65, 204, 255);
-}
-
-.current-step:hover {
-  background-color: rgb(0, 146, 199);
-}
-
 .main {
   display: flex;
   justify-content: center;
@@ -87,25 +47,4 @@ select:focus-visible {
   margin: auto;
   padding:1px 0 0 1px;
   background: transparent;
-}
-
-.row {
-  display: flex;
-  background: transparent;
-}
-
-.grid {
-  z-index: 1;
-  border: 3px solid black;
-  position: absolute;
-  background: transparent;
-  pointer-events: none;
-}
-
-.grid-test {
-  z-index: 10000;
-  border: 3px solid #AAEEEEEE;
-  position: absolute;
-  background: transparent;
-  pointer-events: none;
 }
