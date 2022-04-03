@@ -6,7 +6,8 @@ import { copyMatrix, EMPTY_VALUE, solve } from './solver/solver';
 import { Matrix, SolveStep } from './solver/types';
 import { DisplayMatrix, DisplayValue } from './types';
 
-const SQUARE_LENGTH = 75;
+const SQUARE_LENGTH_MAX = 75;
+const SQUARE_LENGTH_MIN = 35;
 export const EMPTY_DISPLAY_VALUE: DisplayValue = {value: EMPTY_VALUE, input: false,  solveStep: false, currentStep: false, invalid: false};
 
 function App() {
@@ -17,6 +18,8 @@ function App() {
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [solved, setSolved] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [squareLength, setSquareLength] = useState<number>(calculateWidth(displayMatrix.length, window.innerWidth));
+  const [containerWidth, setContainerWidth] = useState<number>(squareLength * displayMatrix.length - displayMatrix.length);
 
   const reset = useMemo(() => (chunkSize: number) => {
     setChunkSize(chunkSize);
@@ -34,63 +37,81 @@ function App() {
     }
   }, [solved, inputMatrix, solveSteps, currentStep])
 
-  const width = SQUARE_LENGTH * displayMatrix.length - displayMatrix.length;
+  useEffect(() => {
+    function handleResize() {
+      setSquareLength(calculateWidth(displayMatrix.length, window.innerWidth));
+    }
+    window.addEventListener('resize', handleResize)
+  });
+  useEffect(() => {
+    setContainerWidth(squareLength * displayMatrix.length - displayMatrix.length);
+  }, [squareLength, displayMatrix])
+
   return (
     <div className="main">
       <div className="header">
         <h1 style={{textAlign: "center"}}>Sudoku Solver</h1>
         <div className="button-container">
-          <button disabled={chunkSize===2} onClick={() => chunkSize !== 2 && reset(2)}>2 x 2</button>
-          <button disabled={chunkSize===3} onClick={() => chunkSize !== 3 && reset(3)}>3 x 3</button>
-          <button onClick={() => reset(chunkSize)}>Reset</button>
-          {
-            solved ? 
-            <button onClick={() => {
-              setInputMatrix(displayMatrix);
-              setSolveSteps([]);
-              setCurrentStep(-1);
-              setSolved(false);
-              setError(null);
-            }}>Unlock</button> :
-            <button onClick={() => {
-              if (containsNoInput(displayMatrix)) {
-                setError("Please provide an input!");
-                return;
-              }
-              if (containsInvalidInput(displayMatrix)) {
-                setError("Input is invalid!");
-                return;
-              }
-
-              const result = solve({chunkSize: chunkSize, matrix: displayToNumberMatrix(displayMatrix)});
-              if (result.steps.length > 0) {
+          <div className="inner-button-container">
+            <button disabled={chunkSize===2} onClick={() => chunkSize !== 2 && reset(2)}>2 x 2</button>
+            <button disabled={chunkSize===3} onClick={() => chunkSize !== 3 && reset(3)}>3 x 3</button>
+          </div>
+          <div className="inner-button-container">
+            <button onClick={() => reset(chunkSize)}>Reset</button>
+            {
+              solved ? 
+              <button onClick={() => {
                 setInputMatrix(displayMatrix);
-                setSolveSteps(result.steps);
-                setSolved(true);
-                if (result.error !== undefined) {
-                  setError(result.error);
+                setSolveSteps([]);
+                setCurrentStep(-1);
+                setSolved(false);
+                setError(null);
+              }}>Unlock</button> :
+              <button onClick={() => {
+                if (containsNoInput(displayMatrix)) {
+                  setError("Please provide an input!");
+                  return;
                 }
-              } else {
-                setError("No solve steps!");
-              }
-            }}>Solve</button>
-          }
+                if (containsInvalidInput(displayMatrix)) {
+                  setError("Input is invalid!");
+                  return;
+                }
+
+                const result = solve({chunkSize: chunkSize, matrix: displayToNumberMatrix(displayMatrix)});
+                if (result.steps.length > 0) {
+                  setInputMatrix(displayMatrix);
+                  setSolveSteps(result.steps);
+                  setSolved(true);
+                  if (result.error !== undefined) {
+                    setError(result.error);
+                  }
+                } else {
+                  setError("No solve steps!");
+                }
+              }}>Solve</button>
+            }
+          </div>
         </div>
         <div className="button-container" style={{display: solveSteps.length === 0 ? "none" : "flex"}}>
-        <button disabled={currentStep === -1} 
-            onClick={() => setCurrentStep(-1)}>None</button>
-          <button disabled={currentStep === -1} 
-            onClick={() => setCurrentStep(currentStep - 1)}>Prev. Step</button>
-          <button disabled={solveSteps.length - 1 === currentStep} 
-            onClick={() => setCurrentStep(currentStep + 1)}>Next Step</button>
-          <button disabled={solveSteps.length - 1 === currentStep} 
-            onClick={() => setCurrentStep(solveSteps.length - 1)}>Show All</button>
+        <div className="inner-button-container">
+          <button disabled={currentStep === -1} onClick={() => setCurrentStep(currentStep - 1)}>Prev. Step</button>
+          <button disabled={solveSteps.length - 1 === currentStep} onClick={() => setCurrentStep(currentStep + 1)}>Next Step</button>
         </div>
+        <div className="inner-button-container">
+          <button disabled={currentStep === -1} onClick={() => setCurrentStep(-1)}>None</button>
+          <button disabled={solveSteps.length - 1 === currentStep} onClick={() => setCurrentStep(solveSteps.length - 1)}>Show All</button>
+        </div>
+        </div>
+        {error !== null && <div className="container" style={{width: containerWidth}}>
+          {error}
+        </div>}
       </div>
-      <Grid displayMatrix={copyMatrix(displayMatrix)} setDisplayMatrix={setDisplayMatrix} solved={solved} gridItemLength={SQUARE_LENGTH} chunkSize={chunkSize} width={width} />
-      {error !== null && <div className="container" style={{width: width}}>
-        {error}
-      </div>}
+      <Grid displayMatrix={copyMatrix(displayMatrix)} setDisplayMatrix={setDisplayMatrix} solved={solved} gridItemLength={squareLength} chunkSize={chunkSize} width={containerWidth} />
+      <div style={{display: "flex", justifyContent: "center", fontSize: "x-small", marginTop: "2rem"}}>
+          <a target="_blank" rel="noreferrer" href="https://icons8.com/icon/113694/sudoku">Sudoku</a>
+          &nbsp;icon by&nbsp;
+          <a target="_blank" rel="noreferrer" href="https://icons8.com">Icons8</a>
+      </div>
     </div>
   );
 }
@@ -161,6 +182,17 @@ function containsNoInput(source: DisplayMatrix): boolean {
   }
 
   return true;
+}
+
+function calculateWidth(items: number, windowWidth: number): number {
+  const calculatedLength = (windowWidth - items) / items;
+  if (calculatedLength > SQUARE_LENGTH_MIN && calculatedLength < SQUARE_LENGTH_MAX) {
+    return calculatedLength;
+  } else if (calculatedLength < SQUARE_LENGTH_MIN) {
+    return SQUARE_LENGTH_MIN;
+  } else {
+    return SQUARE_LENGTH_MAX;
+  }
 }
 
 export default App;
